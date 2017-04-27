@@ -1,13 +1,13 @@
 (function ($) {
 	$(function () {
-		userInput = function (e) {
-			if (e.key == "Enter") {
-				var ip = $(this).val()
-				console.log(ip);
-				var inputJson = JSON.parse(ip);
-				console.log(inputJson);
-			}
-		}
+		// userInput = function (e) {
+		// 	if (e.key == "Enter") {
+		// 		var ip = $(this).val()
+		// 		console.log(ip);
+		// 		var inputJson = JSON.parse(ip);
+		// 		console.log(inputJson);
+		// 	}
+		// }
 
 		//recursive function to create html from json object
 		prettyprint = function (obj, name) {
@@ -62,77 +62,30 @@
 
 		Ajax = function () {
 			var requestsArray = arguments;
-
+			var c = [];
+			var done = 0;
 			var p = new Promise((resolve, reject) => {
-				var c = [];
-				var done = 0;
-				for (i in requestsArray) {
-					//console.log(requestsArray[i]);
-					var xhr = new XMLHttpRequest();
-					xhr.onreadystatechange = function () {
-						if (this.readyState == 4 && this.status == 200) {
-							// Typical action to be performed when the document is ready
-							c[i] = parseJson(this.responseText);
-							if (done != requestsArray.length - 1) {
-								done++;
-							} else {
-								resolve(c);
-							}
 
-							//resolve(xhr.responseText);
-						}
-					};
-					xhr.open("GET", requestsArray[i], true);
-					xhr.send();
+				for (i in requestsArray) {
+					(function (i) {
+						var xhr = new XMLHttpRequest();
+						xhr.onreadystatechange = function () {
+							if (xhr.readyState == 4 && xhr.status == 200) {
+								c[i] = parseJson(xhr.responseText);
+								if (done != requestsArray.length - 1) {
+									done++;
+								} else {
+									resolve(c);
+								}
+							}
+						};
+						xhr.open("GET", requestsArray[i], true);
+						xhr.send();
+					})(i);
 				}
 			});
-			p.then((response) => {
-				console.log(response);});
+			return p;
 		};
-
-		customAjax = function () {
-			var p = new Promise((resolve, reject) => {
-				var c = [];
-				//c.length = arguments.length;
-				var done = 0;
-				var xhr = new XMLHttpRequest();
-				xhr.onreadystatechange = function () {
-					if (this.readyState == 4 && this.status == 200) {
-						// Typical action to be performed when the document is ready
-						c[0] = parseJson(this.responseText);
-						if (done == 0) {
-							done = 1;
-						} else {
-							resolve(c);
-						}
-
-						//resolve(xhr.responseText);
-					}
-				};
-				xhr.open("GET", "https://api.github.com/users/vjai", true);
-				xhr.send();
-				var xhr1 = new XMLHttpRequest();
-				xhr1.onreadystatechange = function () {
-					if (this.readyState == 4 && this.status == 200) {
-						// Typical action to be performed when the document is ready:
-						c[1] = parseJson(xhr1.responseText);
-						if (done == 0) {
-							done = 1;
-						} else {
-							resolve(c);
-						}
-					}
-				};
-				xhr1.open("GET", "https://api.stackexchange.com/2.2/users?site=stackoverflow", true);
-				xhr1.send();
-
-			});
-			p.then((response) => {
-				console.log(response);
-				$("#ajax-content").append(prettyprint(response, 'Object'));
-				$("#ajax-content").children('div').removeClass('hide');
-			});
-		}
 		parseJson = function (obj) {
 			try {
 				return JSON.parse(obj);
@@ -140,8 +93,14 @@
 				return obj;
 			}
 		}
-
-		$('#inputJson').on('keyup', userInput);
+		callAjax = function () {
+			Ajax('https://api.github.com/users/vjai', 'https://api.stackexchange.com/2.2/users?site=stackoverflow').then((response) => {
+				console.log(response);
+				$("#ajax-content").append(prettyprint(response, 'Object'));
+				$("#ajax-content").children('div').removeClass('hide');
+			});
+		};
+		// $('#inputJson').on('keyup', userInput);
 		$('#renderJson').on('click', '.parent', toggle);
 		$('#ajax-content').on('click', '.parent', toggle);
 
